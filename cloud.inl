@@ -4,18 +4,17 @@ cloud<points>::cloud()
 }
 
 template<typename points>
-void cloud<points>::getScale(float* Volume)
+void cloud<points>::getScale(float* Volume, float* max_dist)
 {
-	points minPt, maxPt;
-	pcl::getMinMax3D (*cloud_in, minPt, maxPt);
-  float dist_x=maxPt.x-minPt.x;
-  float dist_y=maxPt.y-minPt.y;
-  float dist_z=maxPt.z-minPt.z;
-
-	Eigen::Matrix4f scaling= Eigen::Matrix4f::Identity();
-	//float resize=max(   (maxPt.x-minPt.x),   (maxPt.y-minPt.y),    (maxPt.z-minPt.z)     );
-	//transformation*float(1/resize);
-	*Volume= dist_x*dist_y*dist_z;
+    points minPt, maxPt;
+    pcl::getMinMax3D (*cloud_in, minPt, maxPt);
+    float dist_x=maxPt.x-minPt.x;
+    float dist_y=maxPt.y-minPt.y;
+    float dist_z=maxPt.z-minPt.z;
+    std::vector<float> maxis{abs(maxPt.x), abs(maxPt.y), abs(maxPt.z), abs(minPt.x), abs(minPt.y), abs(minPt.z)};
+    *max_dist=*std::max_element(maxis.begin(), maxis.end());
+    Eigen::Matrix4f scaling= Eigen::Matrix4f::Identity();
+    *Volume= dist_x*dist_y*dist_z;
 }
 
 
@@ -80,11 +79,6 @@ void cloud<points>::clean()
 {
     std::vector<int> indices;
     pcl::removeNaNFromPointCloud(*cloud_in, *cloud_in, indices);
-//    pcl::StatisticalOutlierRemoval<points> sor;
-//    sor.setInputCloud (cloud_in);
-//    sor.setMeanK (50);
-//    sor.setStddevMulThresh (1.0);
-//    sor.filter (*cloud_in);
 
     typename pcl::ConditionAnd<points>::Ptr condition (new pcl::ConditionAnd<points>);
     condition->addComparison(typename pcl::FieldComparison<points>::ConstPtr(new typename pcl::FieldComparison<points>("x", pcl::ComparisonOps::LT, 30)));
@@ -105,11 +99,6 @@ void cloud<points>::clean()
     pass.setFilterLimitsNegative (true);
     pass.filter (*cloud_in);
 
-//    pass.setInputCloud (cloud_in);
-//    pass.setFilterFieldName ("z");
-//    pass.setFilterLimits (50,50);
-//    pass.setFilterLimitsNegative (true);
-//    pass.filter (*cloud_in);
 }
 
 template<typename points>
