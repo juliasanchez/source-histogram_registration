@@ -4,15 +4,13 @@ cloud<points>::cloud()
 }
 
 template<typename points>
-void cloud<points>::getScale(float* Volume, float* max_dist)
+void cloud<points>::getScale(float* Volume)
 {
     points minPt, maxPt;
     pcl::getMinMax3D (*cloud_in, minPt, maxPt);
     float dist_x=maxPt.x-minPt.x;
     float dist_y=maxPt.y-minPt.y;
     float dist_z=maxPt.z-minPt.z;
-    std::vector<float> maxis{abs(maxPt.x), abs(maxPt.y), abs(maxPt.z), abs(minPt.x), abs(minPt.y), abs(minPt.z)};
-    *max_dist=*std::max_element(maxis.begin(), maxis.end());
     Eigen::Matrix4f scaling= Eigen::Matrix4f::Identity();
     *Volume= dist_x*dist_y*dist_z;
 }

@@ -28,7 +28,7 @@ public:
 	cloud();
 	void setInputCloud(typename pcl::PointCloud<points>::Ptr&);
 	void getTree(typename pcl::search::KdTree<points>::Ptr&);
-        void getScale(float*, float*);
+        void getScale(float*);
 	void clean();
 	void getInputCloud(typename pcl::PointCloud<points>::Ptr);
         void getNormals(float, typename pcl::PointCloud<pcl::Normal>::Ptr);

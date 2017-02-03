@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <string>
-#include <pcl/features/fpfh_omp.h>
 
 #include "cloud.h"
 #include "display_normals.h"

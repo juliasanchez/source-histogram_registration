@@ -1,4 +1,4 @@
-void pre_process(std::string pcd_file,float sample,float normal_radius, int display,pcl::PointCloud<pcl_point>::Ptr cloud_in, pcl::PointCloud<pcl::Normal>::Ptr normals, float* max_dist)
+void pre_process(std::string pcd_file,float sample,float normal_radius, int display,pcl::PointCloud<pcl_point>::Ptr cloud_in, pcl::PointCloud<pcl::Normal>::Ptr normals)
 {
     cloud<pcl_point> cloud_src;
     cloud_src.setInputCloud(cloud_in);
@@ -7,8 +7,6 @@ void pre_process(std::string pcd_file,float sample,float normal_radius, int disp
     cloud_src.clean();
 
     cloud_src.getNormals(normal_radius, normals);
-    float Volume;
-    cloud_src.getScale(&Volume, max_dist);
 
     if (display)
     {

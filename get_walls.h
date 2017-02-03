@@ -9,7 +9,7 @@
 
 typedef pcl::PointXYZ pcl_point;
 
-void get_walls(pcl::PointCloud<pcl::PointNormal>::Ptr cloud_in, std::vector<float> axis1,std::vector<float> axis2, float lim, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered);
+void get_walls(pcl::PointCloud<pcl::PointNormal>::Ptr cloud_in, float lim, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered);
 
 #include "get_walls.inl"
 
