@@ -43,13 +43,13 @@ void get_phi_hist(pcl::PointCloud<pcl::PointNormal>::Ptr normals, std::vector<st
                       }
                       else if (m==N_hist*2-1)
                       {
-                          std::cout<<"can't order this normal :  x:"<<x_dot<<"   z: "<<z_dot<<std::endl<<std::endl;
+//                          std::cout<<"can't order this normal :  x:"<<x_dot<<"   z: "<<z_dot<<std::endl<<std::endl;
                       }
                   }
               }
               else if (n==N_hist-1 && done==0)
               {
-                  std::cout<<"can't order this normal :  indice:"<<i<<"   x: "<<x_dot<<"   z: "<<z_dot<<std::endl<<std::endl;
+ //                 std::cout<<"can't order this normal :  indice:"<<i<<"   x: "<<x_dot<<"   z: "<<z_dot<<std::endl<<std::endl;
               }
               if(done)
               {break;}
