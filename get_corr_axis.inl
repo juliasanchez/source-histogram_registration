@@ -23,10 +23,6 @@ void get_corr_axis(std::vector<float>& hist1_axisi, std::vector<float>& hist2_ax
         for (int m=0; m<N_hist_axis; m++)
         {
             hist11_axis[m+k]=hist1_axisi[m];
-//            if(k<=N_hist_axis)
-//            {hist11_axis[m+k]=hist1_axisi[m]/k;}
-//            else
-//            {hist11_axis[m+k]=hist1_axisi[m]/(2*N_hist_axis-k);}
         }
 
         //compute error and get minimum

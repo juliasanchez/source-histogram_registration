@@ -16,6 +16,7 @@ void get_phi_hist(pcl::PointCloud<pcl::PointNormal>::Ptr normals, std::vector<st
 
       int done=0;
       float count=0;
+      float delta=M_PI/N_hist;
 
       for (size_t i = 0; i < normals->points.size (); ++i)
       {
@@ -27,32 +28,11 @@ void get_phi_hist(pcl::PointCloud<pcl::PointNormal>::Ptr normals, std::vector<st
           {
               phi=2*M_PI-phi;
           }
-          done=0;
-          for (int n = 0; n < N_hist; ++n)
+          if(theta == theta && phi==phi)
           {
-              if (  ((n+1)*M_PI/N_hist-theta)>0 && theta-n*M_PI/N_hist>=0 )
-              {
-                  for (int m = 0; m < N_hist*2; ++m)
-                  {
-                      if (   ((m+1)*M_PI/N_hist-phi)>0 && phi-m*M_PI/N_hist>=0    )
-                      {
-                      hist[n][m]=hist[n][m]+1.0/(float)(normals->points.size ());
-                      done=1;
-                      count=count +1.0/(float)(normals->points.size ());
-                      break;
-                      }
-                      else if (m==N_hist*2-1)
-                      {
-//                          std::cout<<"can't order this normal :  x:"<<x_dot<<"   z: "<<z_dot<<std::endl<<std::endl;
-                      }
-                  }
-              }
-              else if (n==N_hist-1 && done==0)
-              {
- //                 std::cout<<"can't order this normal :  indice:"<<i<<"   x: "<<x_dot<<"   z: "<<z_dot<<std::endl<<std::endl;
-              }
-              if(done)
-              {break;}
-           }
+              int n=(int)(theta/delta);
+              int m=(int)(phi/delta);
+              hist[n][m]=hist[n][m]+1.0/(float)(normals->points.size ());
+          }
       }
 }

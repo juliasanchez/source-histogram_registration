@@ -10,9 +10,11 @@
 #include "get_error_phi.h"
 #include "get_error_theta.h"
 #include "save_vector.h"
+#include "save_axis.h"
 #include "get_walls.h"
 #include "norm_hist.h"
 #include "transform.h"
+#include "get_LCP.h"
 
 
 typedef pcl::PointXYZ pcl_point;
@@ -63,8 +65,8 @@ int main(int argc, char *argv[])
     std::vector<std::vector<float>> hist2(N_hist,std::vector<float>(N_hist*2, 0.0));
     std::vector<float> hist2_phi(N_hist*2, 0.0);
 
-    std::vector<float> error_phi(N_hist*2,0.0);
-    std::vector<float>  error_theta(N_hist*2, 0.0);
+    std::vector<float> error_phi(N_hist*2, 0.0);
+    std::vector<float> error_theta(N_hist*2, 0.0);
 
     int rotation_phi;
     int rotation_theta;
@@ -99,6 +101,12 @@ int main(int argc, char *argv[])
     //float phi = (float)(rotation_phi)*M_PI/(float)(N_hist);
     float phi=atof(argv[6]);
 
+    int tmp=0;
+    int idx=0;
+    int LCP=0;
+
+    Eigen::Matrix4f good_transform = Eigen::Matrix4f::Identity();
+    Eigen::Matrix4f total_transform = Eigen::Matrix4f::Identity();
 
     for (int q=0; q<4; q++)
     {
@@ -109,6 +117,12 @@ int main(int argc, char *argv[])
         pcl::copyPointCloud(pointNormals_tgt_init,*pointNormals_tgt);
 
          phi=(float)(rotation_phi)*M_PI/(float)(N_hist) + q*M_PI/2;
+         if(phi>2*M_PI)
+         {
+             phi=phi-2*M_PI;
+         }
+
+         std::cout<<"PHI = "<<phi<<std::endl<<std::endl;
         //float phi=5.59596191421;
         //float phi=4.63875353924;
         Eigen::Matrix4f transform_phi = Eigen::Matrix4f::Identity();
@@ -135,20 +149,16 @@ int main(int argc, char *argv[])
         save_vector(error_phi, "error_phi.csv");
         save_vector(error_theta, "error_theta.csv");
 
-        std::vector<float> res_phi(4,0.0);
-
         std::cout<<"  phi rotation  : "<<std::endl;
 
         for (int k =0; k<4; k++)
         {
             if((float)(rotation_phi)*180.0/(float)(N_hist)+k*90<360)
             {
-              res_phi[k]=(float)(rotation_phi)*180.0/(float)(N_hist)+k*90;
               std::cout<<"  -->"<<(float)(rotation_phi)*180.0/(float)(N_hist)+k*90<<"  degrés"<<std::endl;
             }
             else
             {
-              res_phi[k]=(float)(rotation_phi)*180.0/(float)(N_hist)-(4-k)*90;
               std::cout<<"  -->"<<(float)(rotation_phi)*180.0/(float)(N_hist)-(4-k)*90<<"  degrés"<<std::endl;
             }
 
@@ -212,8 +222,8 @@ int main(int argc, char *argv[])
         std::vector<float> axis1={cos(angles1[0]), sin(angles1[0]), 0};
         std::vector<float> axis2={cos(angles2[0]), sin(angles2[0]), 0};
 
-        save_vector(axis1, "axis1.csv");
-        save_vector(axis2, "axis2.csv");
+        save_axis(axis1, "axis1.csv");
+        save_axis(axis2, "axis2.csv");
 
         ///transform clouds to be aligned in x and y axis
 
@@ -237,8 +247,8 @@ int main(int argc, char *argv[])
         get_walls(pointNormals_src, lim, cloud_src_filtered);
         get_walls(pointNormals_tgt, lim, cloud_tgt_filtered);
 
-    //    pcl::io::savePCDFileASCII ("source_filtered.pcd", *cloud_src_filtered);
-    //    pcl::io::savePCDFileASCII ("target_filtered.pcd", *cloud_tgt_filtered);
+//        pcl::io::savePCDFileASCII ("source_filtered.pcd", *cloud_src_filtered);
+//        pcl::io::savePCDFileASCII ("target_filtered.pcd", *cloud_tgt_filtered);
 
         ///get histograms on normals axes--------------------------------------------------------------------------------------------------------------
 
@@ -246,12 +256,9 @@ int main(int argc, char *argv[])
         std::vector<std::vector<float>> hist1_axis(N_hist_axis,std::vector<float>(N_hist_axis,0.0));
         std::vector<std::vector<float>> hist2_axis(N_hist_axis,std::vector<float>(N_hist_axis,0.0));
 
-        pcl::transformPointCloud(*cloud_src, *cloud_src, align_xy);
-        pcl::transformPointCloud (*cloud_tgt, *cloud_tgt, align_xy);
-
         pcl::PointXYZ min_src, max_src, min_tgt, max_tgt;
-        pcl::getMinMax3D (*cloud_src, min_src, max_src);
-        pcl::getMinMax3D (*cloud_tgt, min_tgt, max_tgt);
+        pcl::getMinMax3D (*cloud_src_filtered, min_src, max_src);
+        pcl::getMinMax3D (*cloud_tgt_filtered, min_tgt, max_tgt);
 
         float axis1_min=std::min(min_src.x, min_tgt.x)-0.3;
         float axis2_min=std::min(min_src.y, min_tgt.y)-0.3;
@@ -312,7 +319,11 @@ int main(int argc, char *argv[])
         get_corr_axis(hist1_axis2, hist2_axis2, corr_axis2, &translation_axis2);
         save_vector(corr_axis2, "corr_axis2.csv");
 
-        float delta2=(float)(  (axis2_max-axis1_min)/(float)(N_hist)  );
+        if(atoi(argv[9])!=0)
+        {
+        translation_axis2=atoi(argv[9]);
+        }
+        float delta2=(float)(  (axis2_max-axis2_min)/(float)(N_hist)  );
         std::cout<<"movment for axis 2: "<<std::endl;
         std::cout<<std::endl<<"  x translation: "<<(translation_axis2-N_hist_axis+1)*delta2*cos(phi+M_PI/2)<<"  y translation: "<<(translation_axis2-N_hist_axis+1)*delta2*sin(phi+M_PI/2)<<"  z translation: "<<(translation_axis2-N_hist_axis+1)*delta2*cos(theta)<<std::endl<<std::endl;
 
@@ -320,9 +331,18 @@ int main(int argc, char *argv[])
         translation_transform(0,3)=(translation_axis2-N_hist_axis+1)*delta2*cos(phi+M_PI/2)+(translation_axis1-N_hist_axis+1)*delta1*cos(phi);
         translation_transform(1,3)=(translation_axis2-N_hist_axis+1)*delta2*sin(phi+M_PI/2)+(translation_axis1-N_hist_axis+1)*delta1*sin(phi);
         translation_transform(2,3)=(translation_axis2-N_hist_axis+1)*delta2*cos(theta)+(translation_axis1-N_hist_axis+1)*delta1*cos(theta);
-        Eigen::Matrix4f total_transform = Eigen::Matrix4f::Identity();
         total_transform=rotation_transform+translation_transform;
         std::cout<<"total transformation : "<<std::endl<<total_transform<<std::endl<<std::endl;
+
+        get_LCP(cloud_src, cloud_tgt, &total_transform, &LCP);
+
+        if(tmp<LCP)
+        {
+            tmp=LCP;
+            idx=q;
+            good_transform=total_transform;
+        }
+     }
 
         std::string file_name;
         std::string file_name1;
@@ -346,11 +366,11 @@ int main(int argc, char *argv[])
         file_name2 = file_name.substr(lastindex_slash+1, lastindex_point-(lastindex_slash+1));
         std::stringstream sstm;
         sstm.str("");
-        sstm<<"transformations/"<<file_name1<<"_"<<file_name2<<"_"<<q<<".txt";
+        sstm<<"transformations/"<<file_name1<<"_"<<file_name2<<".txt";
         std::string file_name_tot = sstm.str();
         ofstream file (file_name_tot);
-        file<<total_transform;
+        file<<good_transform;
         file.close();
-    }
+
 }
 
