@@ -1,19 +1,43 @@
-void get_proj_axis(float axis1_min, float axis2_min, float axis1_max, float axis2_max,  pcl::PointCloud<pcl_point>::Ptr cloud, std::vector<std::vector<float>>& hist_axis)
+void get_proj_axis(std::vector<float> axis_lim, int axis, pcl::PointCloud<pcl_point>::Ptr cloud, std::vector<float>& hist_axis )
 {
-      int N_hist=hist_axis.size();
+      int N_hist_axis=hist_axis.size();
 
-      float v_axis1;
-      float v_axis2;
+      float v_axis;
 
-      float delta1=(float)(  (axis1_max-axis1_min)/(float)(N_hist)  );
-      float delta2=(float)(  (axis2_max-axis2_min)/(float)(N_hist)  );
+      float delta=(float)(  (axis_lim[1]-axis_lim[0])/(float)(N_hist_axis)  );
 
-      for (size_t i = 0; i < cloud->points.size (); ++i)
+      switch(axis)
       {
-          v_axis1 = cloud->points[i].x;
-          v_axis2 = cloud->points[i].y;
-          int n=(int)(v_axis1/delta1+abs(axis1_min)/delta1);
-          int m=(int)(v_axis2/delta2+abs(axis2_min)/delta2);
-          hist_axis[n][m]=hist_axis[n][m]+1.0/(float)(cloud->points.size ());
+        case 0:
+            for (size_t i = 0; i < cloud->points.size (); ++i)
+            {
+              v_axis = cloud->points[i].x;
+              int n=(int)(  (v_axis-axis_lim[0]) /delta  );
+              hist_axis[n]=hist_axis[n]+1.0/(float)(cloud->points.size ());
+            }
+            break;
+
+        case 1:
+            for (size_t i = 0; i < cloud->points.size (); ++i)
+            {
+                v_axis = cloud->points[i].y;
+                int n=(int)(  (v_axis-axis_lim[0]) /delta  );
+                hist_axis[n]=hist_axis[n]+1.0/(float)(cloud->points.size ());
+            }
+            break;
+
+
+        case 2:
+            for (size_t i = 0; i < cloud->points.size (); ++i)
+            {
+                v_axis = cloud->points[i].z;
+                int n=(int)(  (v_axis-axis_lim[0]) /delta  );
+                hist_axis[n]=hist_axis[n]+1.0/(float)(cloud->points.size ());
+            }
+            break;
+
+        default:
+            cout<<"Error, bad axis\n";
+            break;
       }
 }

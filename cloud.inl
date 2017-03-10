@@ -34,7 +34,7 @@ void cloud<points>::getNormals(float radius, typename pcl::PointCloud<pcl::Norma
         pcl::NormalEstimationOMP<points, pcl::Normal> normal_estimation;
 	normal_estimation.setSearchMethod(typename pcl::search::KdTree<points>::Ptr(new pcl::search::KdTree<points>));
 	normal_estimation.setRadiusSearch(radius);
-        normal_estimation.setViewPoint (std::numeric_limits<float>::max (), std::numeric_limits<float>::max (), std::numeric_limits<float>::max ());
+        normal_estimation.setViewPoint (0, 0, 0);
 	normal_estimation.setInputCloud(cloud_in);
         normal_estimation.compute(*normals);
 }
@@ -75,6 +75,8 @@ void cloud<points>::load(std::string pcd_file)
 template<typename points>
 void cloud<points>::clean()
 {
+    std::cout << "before cleaning : " << cloud_in->size ()<<std::endl;
+
     std::vector<int> indices;
     pcl::removeNaNFromPointCloud(*cloud_in, *cloud_in, indices);
 
@@ -90,12 +92,14 @@ void cloud<points>::clean()
     filter.setInputCloud(cloud_in);
     filter.filter(*cloud_in);
 
-    pcl::PassThrough<points> pass;
-    pass.setInputCloud (cloud_in);
-    pass.setFilterFieldName ("z");
-    pass.setFilterLimits (0.0,0.0);
-    pass.setFilterLimitsNegative (true);
-    pass.filter (*cloud_in);
+//    pcl::PassThrough<points> pass;
+//    pass.setInputCloud (cloud_in);
+//    pass.setFilterFieldName ("z");
+//    pass.setFilterLimits (0.0,0.0);
+//    pass.setFilterLimitsNegative (true);
+//    pass.filter (*cloud_in);
+
+    std::cout << " after cleaning : " << cloud_in->size () << std::endl<<std::endl;
 
 }
 
@@ -127,4 +131,10 @@ double cloud<points>::computeCloudResolution ()
     res /= n_points;
   }
   return res;
+}
+
+template<typename points>
+void cloud<points>::transform( Eigen::Matrix4f matrix_transform)
+{
+    pcl::transformPointCloud (*cloud_in, *cloud_in, matrix_transform);
 }

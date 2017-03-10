@@ -1,4 +1,4 @@
-void get_corr_axis(std::vector<float>& hist1_axisi, std::vector<float>& hist2_axisi, std::vector<float>& error_axis, int *translation_axis)
+void get_corr_axis(std::vector<float>& hist1_axisi, std::vector<float>& hist2_axisi, std::vector<float>& corr_axis, int *translation_axis)
 {
     int p=0;
     float temp=0;
@@ -25,32 +25,29 @@ void get_corr_axis(std::vector<float>& hist1_axisi, std::vector<float>& hist2_ax
             hist11_axis[m+k]=hist1_axisi[m];
         }
 
-        //compute error and get minimum
+        //compute correlation
 
         for (int m=0; m<3*N_hist_axis-2; m++)
         {
-            error_axis[k]=error_axis[k]+hist11_axis[m]*hist21_axis[m];
+            corr_axis[k]=corr_axis[k]+hist11_axis[m]*hist21_axis[m];
         }
 
-        if (temp<error_axis[k])
+    }
+
+    std::vector<float> env;
+    int neighbourhood=10;
+    envelope(corr_axis, neighbourhood, &env);
+    save_vector(corr_axis, "corr_axis_before.csv");
+
+    for (int k=10; k<2*N_hist_axis-1-neighbourhood; k++)
+    {
+        corr_axis[k]=corr_axis[k]-env[k-neighbourhood];
+
+        if (temp<corr_axis[k])
         {
-            temp=error_axis[k];
+            temp=corr_axis[k];
             *translation_axis=k;
         }
     }
-
-for (int m=N_hist_axis; m<2*N_hist_axis; m++)
-{
-    hist11_axis[m]=0;
-}
-for (int m=0; m<N_hist_axis; m++)
-{
-    if(*translation_axis<=N_hist_axis)
-    {hist11_axis[m+*translation_axis]=hist1_axisi[m]/ *translation_axis;}
-    else
-    {hist11_axis[m+*translation_axis]=hist1_axisi[m]/(2*N_hist_axis-*translation_axis);}
-}
-
-save_vector(hist11_axis, "hist11_axis_for_translation.csv");
 
 }

@@ -11,6 +11,7 @@
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/point_types.h>
 #include <pcl/common/common.h>
+#include <pcl/common/transforms.h>
 #include <pcl/search/kdtree.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/passthrough.h>
@@ -36,6 +37,7 @@ public:
 	void load (std::string);
 	double computeCloudResolution ();
         void sample(float samp);
+        void transform( Eigen::Matrix4f matrix_transform);
 
 
 private:

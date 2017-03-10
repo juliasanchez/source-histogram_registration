@@ -23,6 +23,8 @@ void get_error_phi(std::vector<float>& hist1_phi, std::vector<float>& hist2_phi,
             }
         }
 
+        error_phi[k]=0;
+
         //compute error and get minimum
 
         for (int m=0; m<N_hist; m++)

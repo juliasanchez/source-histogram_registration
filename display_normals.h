@@ -11,7 +11,7 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/normal_3d_omp.h>
 
-void display_normals (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud1, pcl::PointCloud<pcl::Normal>::Ptr normals);
+void display_normals (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud1, pcl::PointCloud<pcl::Normal>::Ptr normals, int level);
 
 #include "display_normals.inl"
 
