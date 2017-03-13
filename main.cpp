@@ -20,7 +20,7 @@ typedef pcl::PointXYZ pcl_point;
 
 int main(int argc, char *argv[])
 {
-    ///preprocess cloud--------------------------------------------------------------------------------------------------------------
+    ///preprocess clouds--------------------------------------------------------------------------------------------------------------
 
     clock_t t;
     clock_t t_tot=clock();
@@ -31,7 +31,6 @@ int main(int argc, char *argv[])
     pcl::PointCloud<pcl_point>::Ptr cloud_src(new pcl::PointCloud<pcl_point>);
     pcl::PointCloud<pcl::Normal>::Ptr normals_src (new pcl::PointCloud<pcl::Normal>);
     pcl::PointCloud<pcl_point>::Ptr cloud_tgt(new pcl::PointCloud<pcl_point>);
-
     pcl::PointCloud<pcl_point> cloud_src_init;
     pcl::PointCloud<pcl_point> cloud_tgt_init;
     pcl::PointCloud<pcl::Normal>::Ptr normals_tgt (new pcl::PointCloud<pcl::Normal>);
@@ -39,6 +38,10 @@ int main(int argc, char *argv[])
     Eigen::Matrix4f transform_init = Eigen::Matrix4f::Identity();
 
     pre_process(argv[1],sample,normal_radius, 0, 10, cloud_src, transform_init, normals_src);
+
+//    std::vector<int> indices;
+//    pcl::removeNaNNormalsFromPointCloud(*normals_src, *normals_src, indices);
+//    pcl::io::savePCDFileASCII ("normals.pcd", *normals_src);
 
     Eigen::Matrix4f transform_phi_init = Eigen::Matrix4f::Identity();
     Eigen::Matrix4f transform_theta_init = Eigen::Matrix4f::Identity();
@@ -67,7 +70,7 @@ int main(int argc, char *argv[])
     // Print the transformation
     std::cout << "initial transform : "<<std::endl<<transform_init << std::endl;
 
-    pre_process(argv[2],sample,normal_radius, 2, 10, cloud_tgt,  transform_init, normals_tgt);
+    pre_process(argv[2],sample,normal_radius, 0, 10, cloud_tgt,  transform_init, normals_tgt);
 
 
     pcl::io::savePCDFileASCII ("preprocess_src.pcd", *cloud_src);
@@ -79,6 +82,10 @@ int main(int argc, char *argv[])
     pcl::PointCloud<pcl::PointNormal> pointNormals_tgt_init;
     pcl::concatenateFields (*cloud_src, *normals_src, *pointNormals_src);
     pcl::concatenateFields (*cloud_tgt, *normals_tgt, *pointNormals_tgt);
+
+    std::vector<int> indices;
+    pcl::removeNaNNormalsFromPointCloud(*pointNormals_src, *pointNormals_src, indices);
+    pcl::removeNaNNormalsFromPointCloud(*pointNormals_tgt, *pointNormals_tgt, indices);
 
     pcl::io::savePCDFileASCII ("src_with_normals.pcd", *pointNormals_src);
     pcl::io::savePCDFileASCII ("tgt_with_normals.pcd", *pointNormals_tgt);
@@ -134,10 +141,6 @@ int main(int argc, char *argv[])
     Eigen::Matrix4f total_transform = Eigen::Matrix4f::Identity();
 
 
-    ///compute phi and theta of the principal normal of the principal wall
-
-    //get main axis from the target normals histogram
-
     float phi1;
     float theta1;
     float phi0;
@@ -145,7 +148,7 @@ int main(int argc, char *argv[])
 
     for (int q=0; q<4; q++)
     {
-        ///initialize cloud_src cloud_tgt and phi-----------------------------------------------------------------------------------
+        ///initialize cloud_src cloud_tgt and phi--------------------------------------------------------------------------------------------------------------------------------------
 
         pcl::copyPointCloud(cloud_src_init, *cloud_src);
         pcl::copyPointCloud(cloud_tgt_init, *cloud_tgt);
@@ -161,7 +164,7 @@ int main(int argc, char *argv[])
 
          std::cout<<"PHI = "<<phi*180/M_PI<<std::endl<<std::endl;
 
-     ///rotate cloud in the accurate way with rotation information-----------------------------------------------------------------------------------
+     ///rotate cloud in the accurate way with rotation information--------------------------------------------------------------------------------------------------------------------------------------
 
         Eigen::Matrix4f rotation_transform = Eigen::Matrix4f::Identity();
         transform(phi, 0, &rotation_transform);
@@ -170,13 +173,17 @@ int main(int argc, char *argv[])
 
         pcl::transformPointCloudWithNormals (*pointNormals_src, *pointNormals_src, rotation_transform);
 
+     /// get 2 main axis (2 main walls) with the average of normals from source and target------------------------------------------------------------------------------------------------------------------------------------------------
+
+        // first axis
+
         std::vector<std::vector<float>> hist1_angles((int)(N_hist/2), std::vector<float>(N_hist, 0.0));
         std::vector<std::vector<float>> hist2_angles((int)(N_hist/2), std::vector<float>(N_hist, 0.0));
         get_angles_hist(pointNormals_src,hist1_angles);
         get_angles_hist(pointNormals_tgt,hist2_angles);
 
         float temp=0;
-        for (int n=10*(int)(N_hist/360); n<(int)(N_hist/2)-10*(int)(N_hist/360); n++)  //Je commence à 10 degres car je ne veux pas plafonds et sols (theta=0)
+        for (int n=10*(int)(N_hist/360); n<(int)(N_hist/2)-10*(int)(N_hist/360); n++) // hypothesis 1 : z axis deflected from local frame from at most 10*(int)(N_hist/360)=10°
         {
             for (int m=0; m<N_hist; m++)
             {
@@ -193,6 +200,11 @@ int main(int argc, char *argv[])
         {
             phi0=phi0-2*M_PI;
         }
+
+
+
+        // second axis
+
         temp=0;
         float phi00;
         phi00=phi0+M_PI;
@@ -216,15 +228,13 @@ int main(int argc, char *argv[])
             }
         }
 
-        //compute axis of these normals
+        //compute angles of these normals
 
         std::vector<std::vector<float>> angles(3, std::vector<float>(2, 0.0));
         angles[0][0]=phi0+delta_phi/2;
         angles[0][1]=theta0+delta_phi/2;
         angles[1][0]=phi1+delta_phi/2;
         angles[1][1]=theta1+delta_phi/2;
-//        angles[1][0]=M_PI/2+phi0;
-//        angles[1][1]=theta0;
 
         std::vector<std::vector<float>> axis(3, std::vector<float>(3, 0.0)); //columns = axis 1 axis 2 axis 3 __ rows = x, y ,z
         axis[0][0]=cos(angles[0][0])*sin(angles[0][1]);
@@ -237,7 +247,7 @@ int main(int argc, char *argv[])
         axis[2][1]=-axis[0][0]*axis[1][2]+axis[0][2]*axis[1][0];
         axis[2][2]=axis[0][0]*axis[1][1]-axis[0][1]*axis[1][0];
 
-        angles[2][0]=acos( axis[2][0]/(axis[2][0]*axis[2][0]+axis[2][1]*axis[2][1]) );
+        angles[2][0]=acos( axis[2][0]/(axis[2][0]*axis[2][0]+axis[2][1]*axis[2][1]) ); // hypothesis 2 : Walls perp to ground and roof : The third axis is the cross product of the two first ones.
         angles[2][1]=acos(axis[2][2]);
 
         save_axis(axis[0], "axis_x.csv");
@@ -259,9 +269,11 @@ int main(int argc, char *argv[])
         total_transform=rotation_transform+translation_transform;
         std::cout<<"total transformation : "<<std::endl<<total_transform<<std::endl<<std::endl;
 
+        std::cout<<"----------------------------------------------------------------------------------------------------------------------------------------------------"<<std::endl<<std::endl;
+
         ///gcompute LCP for this transformation
 
-        get_LCP(cloud_src, cloud_tgt, &total_transform, &LCP);
+        get_LCP(*cloud_src, *cloud_tgt, &total_transform, &LCP);
 
         if(tmp<LCP)
         {
@@ -302,6 +314,8 @@ int main(int argc, char *argv[])
 
         t_tot=clock()-t_tot;
         std::cout<<"total time to get transform :" <<((float)t_tot)/CLOCKS_PER_SEC<<" seconds"<<std::endl<<std::endl;
+
+        std::cout<<"best transformation : "<<std::endl<<good_transform<<std::endl<<std::endl;
 
 
 }
