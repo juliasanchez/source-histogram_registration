@@ -31,8 +31,7 @@ int main(int argc, char *argv[])
     pcl::PointCloud<pcl_point>::Ptr cloud_src(new pcl::PointCloud<pcl_point>);
     pcl::PointCloud<pcl::Normal>::Ptr normals_src (new pcl::PointCloud<pcl::Normal>);
     pcl::PointCloud<pcl_point>::Ptr cloud_tgt(new pcl::PointCloud<pcl_point>);
-    pcl::PointCloud<pcl_point> cloud_src_init;
-    pcl::PointCloud<pcl_point> cloud_tgt_init;
+
     pcl::PointCloud<pcl::Normal>::Ptr normals_tgt (new pcl::PointCloud<pcl::Normal>);
 
     Eigen::Matrix4f transform_init = Eigen::Matrix4f::Identity();
@@ -90,9 +89,6 @@ int main(int argc, char *argv[])
     pcl::io::savePCDFileASCII ("src_with_normals.pcd", *pointNormals_src);
     pcl::io::savePCDFileASCII ("tgt_with_normals.pcd", *pointNormals_tgt);
 
-    cloud_src_init=*cloud_src;
-    cloud_tgt_init=*cloud_tgt;
-
     pointNormals_src_init=*pointNormals_src;
     pointNormals_tgt_init=*pointNormals_tgt;
 
@@ -146,12 +142,14 @@ int main(int argc, char *argv[])
     float phi0;
     float theta0;
 
+//    std::vector<std::vector<float>> hist1_angles((int)(N_hist/2), std::vector<float>(N_hist, 0.0));
+//    get_angles_hist(pointNormals_src,hist1_angles);
+    std::vector<std::vector<float>> hist2_angles((int)(N_hist/2), std::vector<float>(N_hist, 0.0));
+    get_angles_hist(pointNormals_tgt,hist2_angles);
+
     for (int q=0; q<4; q++)
     {
         ///initialize cloud_src cloud_tgt and phi--------------------------------------------------------------------------------------------------------------------------------------
-
-        pcl::copyPointCloud(cloud_src_init, *cloud_src);
-        pcl::copyPointCloud(cloud_tgt_init, *cloud_tgt);
 
         pcl::copyPointCloud(pointNormals_src_init,*pointNormals_src);
         pcl::copyPointCloud(pointNormals_tgt_init,*pointNormals_tgt);
@@ -178,9 +176,7 @@ int main(int argc, char *argv[])
         // first axis
 
         std::vector<std::vector<float>> hist1_angles((int)(N_hist/2), std::vector<float>(N_hist, 0.0));
-        std::vector<std::vector<float>> hist2_angles((int)(N_hist/2), std::vector<float>(N_hist, 0.0));
         get_angles_hist(pointNormals_src,hist1_angles);
-        get_angles_hist(pointNormals_tgt,hist2_angles);
 
         float temp=0;
         for (int n=10*(int)(N_hist/360); n<(int)(N_hist/2)-10*(int)(N_hist/360); n++) // hypothesis 1 : z axis deflected from local frame from at most 10*(int)(N_hist/360)=10°
@@ -200,8 +196,6 @@ int main(int argc, char *argv[])
         {
             phi0=phi0-2*M_PI;
         }
-
-
 
         // second axis
 
